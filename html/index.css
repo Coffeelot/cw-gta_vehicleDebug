@@ -3,17 +3,27 @@ body {
 	font-family: Arial;
 	font-size: 1.5vmin;
 	font-weight: 800;
-
+	
 	color: white;
 
 	text-shadow:
 		1px 1px 0px rgba(0, 0, 0, 0.8),
 		-1px 1px 0px rgba(0, 0, 0, 0.8),
 		1px -1px 0px rgba(0, 0, 0, 0.8),
-		-1px -1px 0px rgba(0, 0, 0, 0.8);
+		-1px -1px 0px rgba(0, 0, 0, 0.8)
+	;
 
 	user-select: none;
 	text-align: left;
+	display: flex;
+	justify-content: end;
+	align-items: center;
+	overflow: hidden;
+	height: 100vh;
+}
+
+.name {
+
 }
 
 input {
@@ -21,7 +31,6 @@ input {
 	color: white;
 	border: none;
 	outline: none;
-	user-select: all;
 }
 
 button {
@@ -51,15 +60,17 @@ button:active {
 }
 
 #content {
-	display: none;
-	position: absolute;
-	left: 50vw;
-	top: 6vmin;
 	padding: 0px;
 	margin: 0px;
 	tab-size: 0px;
 	max-height: 80vh;
-	transform: translate(-50%, 0%);
+	padding-bottom: 5em;
+}
+
+.stats {
+	display: flex;
+	flex-direction: column;
+	align-items: end;
 }
 
 #handling-fields {
@@ -67,13 +78,13 @@ button:active {
 	flex-direction: column;
 	flex-wrap: wrap;
 	justify-content: space-between;
-	width: 50vw;
+	width: 90vw;
 	max-height: 50vh;
 }
 
 #handling-fields div {
 	display: flex;
-	justify-content: space-between;
+	justify-content: end;
 	margin-right: 2vmin;
 }
 
@@ -85,14 +96,23 @@ button:active {
 	text-align: left;
 	padding: 1vmin 1vmin;
 	border-radius: 1vmin;
-
+	
 	position: absolute;
 	z-index: 1;
 	top: 110%;
 	left: 50%;
-
+	
 	opacity: 0;
 	transform: translate(-50%, 0%);
+}
+
+.name {
+	margin-left: 1em;
+	margin-right: 1em;
+}
+
+.tooltip {
+	background: rgba(0, 0, 0, 0.2);
 }
 
 .tooltip .tooltip-text::after {
@@ -103,4 +123,4 @@ button:active {
 .tooltip:hover .tooltip-text {
 	visibility: visible;
 	opacity: 1;
-}
+} 

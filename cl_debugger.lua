@@ -1,9 +1,12 @@
+local QBCore = exports['qb-core']:GetCoreObject()
+
 Debugger = {
 	speedBuffer = {},
 	speed = 0.0,
 	accel = 0.0,
 	decel = 0.0,
-	toggle = false
+	zerosixty = 0.0,
+	zeroonetwenty = 0.0,
 }
 
 --[[ Functions ]]--
@@ -16,7 +19,7 @@ end
 function Debugger:Set(vehicle)
 	self.vehicle = vehicle
 	self:ResetStats()
-
+	
 	local handlingText = ""
 
 	-- Loop fields.
@@ -39,13 +42,14 @@ function Debugger:Set(vehicle)
 				oninput='updateHandling(this.id, this.value)'
 				id='%s'
 				value=%s
+				type="text"
 			>
 			</input>
 		]]):format(key, value)
-
+		
 		-- Append text.
 		handlingText = handlingText..([[
-			<div class='tooltip'><span class='tooltip-text'>%s</span><span>%s</span>%s</div>
+			<div class='tooltip'><span class='tooltip-text'>%s</span><span class='name'>%s</span>%s</div>
 		]]):format(field.description or "Unspecified.", field.name, input)
 	end
 
@@ -77,12 +81,58 @@ function Debugger:UpdateInput()
 	end
 end
 
+local timer = 0
+local lastCheckWasStandingStill = true
+local zeroSixty = 0
+local zeroOneTwenty = 0
+
+local function saveFirstTimer()
+	zeroSixty = GetTimeDifference(GetGameTimer(), timer)
+end
+
+local function saveSecondTimer()
+	zeroOneTwenty = GetTimeDifference(GetGameTimer(), timer)
+end
+
+local function startTimer()
+	timer = GetGameTimer()
+end
+
 function Debugger:UpdateAverages()
 	if not DoesEntityExist(self.vehicle or 0) then return end
-
 	-- Get the speed.
 	local speed = GetEntitySpeed(self.vehicle)
+	if speed < 2 then
+		startTimer()
+		lastCheckWasStandingStill = true
+	else
+		lastCheckWasStandingStill = false
+	end
+	
+	if speed * 2.236936 > 60 then
+		if zeroSixty ~= 0 then
+			if GetTimeDifference(GetGameTimer(), timer) < zeroSixty then
+				QBCore.Functions.Notify('Better time for 0-60', 'success')
+				saveFirstTimer()
+			end
+		else
+			QBCore.Functions.Notify('First time set for 0-60')
+			saveFirstTimer()
+		end
+	end
 
+	if speed * 2.236936 > 120 then
+		if zeroOneTwenty ~= 0 then
+			if GetTimeDifference(GetGameTimer(), timer) < zeroOneTwenty then
+				QBCore.Functions.Notify('Better time for 0-120', 'success')
+				saveSecondTimer()
+			end
+		else
+			QBCore.Functions.Notify('First time set for 0-120')
+			saveSecondTimer()
+		end
+	end
+	
 	-- Speed buffer.
 	table.insert(self.speedBuffer, speed)
 
@@ -117,11 +167,18 @@ function Debugger:UpdateAverages()
 	self.accel = math.max(self.accel, accel)
 	self.decel = math.min(self.decel, decel)
 
+	self.zerosixty = zeroSixty
+	self.zeroonetwenty = zeroOneTwenty
+
 	-- Update text.
 	self:Invoke("updateText", {
 		["top-speed"] = self.speed * 2.236936,
 		["top-accel"] = self.accel * 60.0 * 2.236936,
 		["top-decel"] = math.abs(self.decel) * 60.0 * 2.236936,
+		["accel-sixty"] = self.zerosixty,
+		["accel-onetwenty"] = self.zeroonetwenty,
+		["accel-good"] = speed < 2,
+
 	})
 end
 
@@ -129,7 +186,11 @@ function Debugger:ResetStats()
 	self.speed = 0.0
 	self.accel = 0.0
 	self.decel = 0.0
+	self.zerosixty = 0.0
+	self.zeroonetwenty = 0.0
 	self.speedBuffer = {}
+	zeroSixty = 0
+	zeroOneTwenty = 0
 end
 
 function Debugger:SetHandling(key, value)
@@ -192,16 +253,9 @@ function Debugger:Focus(toggle)
 
 	SetNuiFocus(toggle, toggle)
 	SetNuiFocusKeepInput(toggle)
-
+	
 	self.hasFocus = toggle
 	self:Invoke("setFocus", toggle)
-end
-
-function Debugger:ToggleOn(toggleData)
-	-- if toggle and not DoesEntityExist(self.vehicle or 0) then return end
-
-	self.toggle = toggleData
-	self:Invoke("toggle", toggleData)
 end
 
 function Debugger:Invoke(_type, data)
@@ -251,13 +305,7 @@ end)
 
 --[[ Commands ]]--
 RegisterCommand("+vehicleDebug", function()
-	if Debugger.toggleOn == false then return end
 	Debugger:Focus(not Debugger.hasFocus)
 end, true)
 
 RegisterKeyMapping("+vehicleDebug", "Vehicle Debugger", "keyboard", "lmenu")
-
-RegisterCommand("vehdebug", function()
-	Debugger:ToggleOn(not Debugger.toggleOn)
-	Debugger.toggleOn = not Debugger.toggleOn
-end, true)
