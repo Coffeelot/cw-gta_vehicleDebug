@@ -1,4 +1,4 @@
-author 'Jameslroll'
+author 'Jameslroll & coffeelot'
 description 'Utility to edit the handling of vehicles and record speeds'
 version '1.0.0'
 
